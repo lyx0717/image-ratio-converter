@@ -30,6 +30,45 @@ const ratioPresets: RatioPreset[] = [
 ]
 
 /**
+ * 创建模糊背景图片
+ */
+function createBlurredBackground(img: HTMLImageElement, targetWidth: number, targetHeight: number, blurAmount: number): HTMLCanvasElement {
+  const blurCanvas = document.createElement('canvas')
+  const blurCtx = blurCanvas.getContext('2d')
+  if (!blurCtx) return blurCanvas
+
+  const smallSize = Math.max(10, Math.min(50, blurAmount / 2))
+  blurCanvas.width = smallSize
+  blurCanvas.height = smallSize
+
+  const scale = Math.max(targetWidth / img.width, targetHeight / img.height) * 1.2
+  const scaledWidth = img.width * scale
+  const scaledHeight = img.height * scale
+
+  const tempCanvas = document.createElement('canvas')
+  tempCanvas.width = targetWidth
+  tempCanvas.height = targetHeight
+  const tempCtx = tempCanvas.getContext('2d')
+  if (!tempCtx) return blurCanvas
+
+  tempCtx.drawImage(img, (targetWidth - scaledWidth) / 2, (targetHeight - scaledHeight) / 2, scaledWidth, scaledHeight)
+
+  blurCtx.drawImage(tempCanvas, 0, 0, smallSize, smallSize)
+
+  const resultCanvas = document.createElement('canvas')
+  resultCanvas.width = targetWidth
+  resultCanvas.height = targetHeight
+  const resultCtx = resultCanvas.getContext('2d')
+  if (!resultCtx) return blurCanvas
+
+  resultCtx.imageSmoothingEnabled = true
+  resultCtx.imageSmoothingQuality = 'high'
+  resultCtx.drawImage(blurCanvas, 0, 0, targetWidth, targetHeight)
+
+  return resultCanvas
+}
+
+/**
  * 图片比例转换工具主组件
  * @returns JSX元素
  */
@@ -92,7 +131,6 @@ function App() {
     if (!ctx) return
 
     const img = new Image()
-    img.crossOrigin = 'anonymous'
     
     img.onload = () => {
       const targetWidth = preset.id === 'custom' ? customWidth : preset.width
@@ -106,14 +144,8 @@ function App() {
       if (Math.abs(originalRatio - targetRatio) < 0.01) {
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
       } else {
-        ctx.filter = `blur(${blurIntensity}px)`
-        const bgScale = Math.max(targetWidth / img.width, targetHeight / img.height) * 1.5
-        const bgScaledWidth = img.width * bgScale
-        const bgScaledHeight = img.height * bgScale
-        const bgX = (targetWidth - bgScaledWidth) / 2
-        const bgY = (targetHeight - bgScaledHeight) / 2
-        ctx.drawImage(img, bgX, bgY, bgScaledWidth, bgScaledHeight)
-        ctx.filter = 'none'
+        const bgCanvas = createBlurredBackground(img, targetWidth, targetHeight, blurIntensity)
+        ctx.drawImage(bgCanvas, 0, 0)
 
         const fitScale = Math.min(targetWidth / img.width, targetHeight / img.height)
         const drawWidth = img.width * fitScale
