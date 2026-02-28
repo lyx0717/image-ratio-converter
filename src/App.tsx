@@ -40,7 +40,6 @@ function App() {
   const [selectedPreset, setSelectedPreset] = useState<RatioPreset | null>(null)
   const [customWidth, setCustomWidth] = useState<number>(1080)
   const [customHeight, setCustomHeight] = useState<number>(1080)
-  const [isConverting, setIsConverting] = useState<boolean>(false)
   const [blurIntensity, setBlurIntensity] = useState<number>(30)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -86,7 +85,6 @@ function App() {
   const convertImage = useCallback(async (preset: RatioPreset) => {
     if (!originalImage || !canvasRef.current) return
 
-    setIsConverting(true)
     setSelectedPreset(preset)
 
     const canvas = canvasRef.current
@@ -132,7 +130,6 @@ function App() {
         newMap.set(preset.id, convertedDataUrl)
         return newMap
       })
-      setIsConverting(false)
     }
 
     img.src = originalImage
